@@ -12,21 +12,57 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-os.getcwd()
+# =============================================================================
+# os.getcwd()
+# 
+# df = pd.read_csv("C:\Users\yushi\OneDrive - ualberta.ca\Applied Finance Project\Data\Half_Data.xls")
+# df = pd.read_excel("Data_Full_Editable.xlsx", skiprows = 2)
+# original_data = df
+# 
+# equity_names = df.iloc[0,:][df.iloc[0,:].notna()]   
+# indicators = df.iloc[2,:]
+# 
+# y_dim = indicators.size
+# x_dim = original_data.shape[0]
+# 
+# columns = pd.MultiIndex.from_product([list(equity_names), list(indicators)])
+# df = pd.DataFrame(np.arange(y_dim*x_dim).reshape((x_dim, y_dim)), columns = columns)
+# 
+# df.to_flat_index()
+# 
+# df.columns.get_level_values[0]
+# =============================================================================
 
-df = pd.read_csv("C:\Users\yushi\OneDrive - ualberta.ca\Applied Finance Project\Data\Half_Data.xls")
-df = pd.read_excel("Data_Full_Editable.xlsx", skiprows = 2)
-original_data = df
 
-equity_names = df.iloc[0,:][df.iloc[0,:].notna()]   
-indicators = df.iloc[2,:]
+## new attempt...reading in columns in chunks of 13
+os.chdir(r"C:\Users\yushi\OneDrive - ualberta.ca\Applied Finance Project\Data")
 
-y_dim = indicators.size
-x_dim = original_data.shape[0]
+which_col = np.hstack((1,np.arange(2,14)))
+all_data = pd.read_excel("Data_Full_Editable.xlsx", skiprows = 2)
 
-columns = pd.MultiIndex.from_product([list(equity_names), list(indicators)])
-df = pd.DataFrame(np.arange(y_dim*x_dim).reshape((x_dim, y_dim)), columns = columns)
+num_of_equities = int((all_data.shape[1]-1)/13)
+names_indices = np.array([i*13+1 for i in range(num_of_equities)])
 
-df.to_flat_index()
+equity_names_all = all_data.iloc[0, names_indices]
+temp = equity_names_all.str.split(" ")
+equity_names = equity_names_all.copy()
+for i in range(len(temp)):
+    equity_names.iloc[i] = temp[i][0]
 
-df.columns.get_level_values(1)
+all_data = all_data.drop(all_data.index[0:2])
+column_names = all_data.iloc[0,np.arange(1,14)]
+
+list_eq = []
+# list_eq is the comprehension database
+# separating each of the equities into its own individual dataframe
+for i in range(len(equity_names)-1):
+    data_temp = all_data.iloc[2:, np.hstack((0,np.arange(names_indices[i],names_indices[i+1])))]
+    data_temp.columns = np.hstack((equity_names[i] + " date",column_names))
+    list_eq.append(data_temp)
+
+
+
+
+
+
+
