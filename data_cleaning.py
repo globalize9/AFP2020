@@ -61,6 +61,36 @@ for i in range(len(equity_names)-1):
     list_eq.append(data_temp)
 
 
+# RSI indicator 
+stock_temp = list_eq[0].copy()
+stock_temp.insert(stock_temp.shape[1],"rsi_i", "NaN")
+rsi_temp = stock_temp.loc[:,"RSI_14D"]
+
+for i in range(len(rsi_temp)):
+    if rsi_temp.iloc[i] >= 70: stock_temp.loc[i,"rsi_i"] = 1
+    elif rsi_temp.iloc[i] <= 30: stock_temp.loc[i,"rsi_i"] = 0
+    else: stock_temp.loc[i,"rsi_i"] = "NaN"
+
+stock_temp = stock_temp[stock_temp.iloc[:,0].notna()] # drop dates with NA
+
+
+
+
+# plotting
+ax1 = plt.axes(stock_temp.iloc[:,0])
+fig, (ax1, ax2) = plt.subplots(2, sharex=True)
+fig.suptitle('RSI')
+
+ax1.plot(x = stock_temp.iloc[:,0], y = stock_temp.iloc[:,1])
+ax2.plot(y = stock_temp.iloc[:,8])
+
+datetime.strptime(stock_temp.iloc[:,0], )
+stock_temp.iloc[:,0]
+
+
+plt.figure()
+plt.plot()
+plt.legend(["EFD "+col_names[3])
 
 
 
