@@ -62,7 +62,7 @@ for i in range(len(equity_names)-1):
 
 
 # RSI indicator 
-stock_temp = list_eq[0].copy()
+stock_temp = list_eq[1].copy()
 stock_temp.insert(stock_temp.shape[1],"rsi_i", "NaN")
 rsi_temp = stock_temp.loc[:,"RSI_14D"]
 
