@@ -74,6 +74,11 @@ for i in range(len(rsi_temp)):
 stock_temp = stock_temp[stock_temp.iloc[:,0].notna()] # drop dates with NA
 
 
+list_eq[0]["PX_OFFICIAL_CLOSE"].plot()
+list_eq[5]["PX_OFFICIAL_CLOSE"].plot()
+list_eq[15]["PX_OFFICIAL_CLOSE"].plot()
+list_eq[25]["PX_OFFICIAL_CLOSE"].plot()
+
 
 
 # plotting
