@@ -58,12 +58,14 @@ df_1.loc[(df_1['Up']<0), 'Up'] = 0
 
 df_1['Down'] = df_1['Return']
 df_1.loc[(df_1['Down']>0), 'Down'] = 0 
-df_1['Down'] = abs(df_1['Down'])
+df_1['Down'] = abs(df_1['Down']) # taking the absolute value for downward movements
 
 df_1['avg_14up'] = df_1['Up'].rolling(window=14).mean()
 df_1['avg_14down'] = df_1['Down'].rolling(window=14).mean()
 
-df_1['RSI'] = 100 - (100/(1+(df_1['avg_14up']/df_1['avg_14down'])))
+df_1['RS'] = 100 - (100/(1+(df_1['avg_14up']/df_1['avg_14down'])))
+df_1['RSI'] = 100 - (100/(1+ (df_1['avg_14up'].shift(1)*13 + df_1['Up'] + df_1['Down']) /
+                          (df_1['avg_14down'].shift(1)*13 + df_1['Up'] + df_1['Down']) ))
 
 
 df_1['200Day_diff'] = df_1['Index']/df_1['200_MA'] - 1
