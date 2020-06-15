@@ -14,7 +14,7 @@ import datetime as dt
 from itertools import combinations
 
 # set cwd
-os.chdir("C:/Users/yushi/OneDrive - ualberta.ca/Applied Finance Project/Data")
+os.chdir("C:/Users/yushi/Documents/GitHub/AFP2020")
 
 all_data_2 = pd.read_excel("Data_Full_Editable.xlsx", sheet_name = "Sheet3", header = [0,1])
 
@@ -30,16 +30,14 @@ for i in combinations(companies,2):
 
 all_combinations
 
-
 df_1= pd.DataFrame({'Index':[],
                     'PE_Ratio':[],
                     'Div_Diff':[]})
 
-
+###### calculating the technical indicators
 df_1['Index'] = all_data_2[str(all_combinations[11].split('_')[0])]['PX_OFFICIAL_CLOSE']/all_data_2[str(all_combinations[11].split('_')[1])]['PX_OFFICIAL_CLOSE']
 df_1['PE_Ratio'] = all_data_2[str(all_combinations[11].split('_')[0])]['BEST_PE_NXT_YR']/all_data_2[str(all_combinations[11].split('_')[1])]['BEST_PE_NXT_YR']
 df_1['Div_Diff'] = (all_data_2[str(all_combinations[11].split('_')[0])]['AVERAGE_DIVIDEND_YIELD'] - all_data_2[str(all_combinations[11].split('_')[1])]['AVERAGE_DIVIDEND_YIELD'])*100
-
 
 
 
@@ -47,17 +45,13 @@ df_1['Return'] = df_1.Index.pct_change()
 
 df_1['1Y_lag_Index'] = df_1['Index'].shift(252)
 
-
 df_1['YoY_change'] = df_1['Index']/df_1['1Y_lag_Index'] - 1
-
 
 df_1['1M_lag_Index'] = df_1['Index'].shift(21)
 df_1['MoM_change'] = df_1['Index']/df_1['1M_lag_Index'] - 1
 
-
 df_1['200_MA'] = df_1['Index'].rolling(window = 200).mean()
 df_1['50_MA'] = df_1['Index'].rolling(window = 50).mean()
-
 
 df_1['Up'] = df_1['Return']
 df_1.loc[(df_1['Up']<0), 'Up'] = 0
@@ -72,8 +66,6 @@ df_1['avg_14down'] = df_1['Down'].rolling(window=14).mean()
 df_1['RSI'] = 100 - (100/(1+(df_1['avg_14up']/df_1['avg_14down'])))
 
 
-
-
 df_1['200Day_diff'] = df_1['Index']/df_1['200_MA'] - 1
 
 
@@ -83,13 +75,9 @@ df_1.loc['2018-12-28']
 
 
 
-
 # start = dt.datetime.strptime('2010-01-01', '%Y-%m-%d')
 end = dt.datetime.strptime('2018-12-31', '%Y-%m-%d')
 df_1_test = df_1.loc[:end,]
-
-
-
 
 
 indicators = pd.DataFrame({'Index':[0],
@@ -107,13 +95,6 @@ indicators = pd.DataFrame({'Index':[0],
                           'M-K_test':[0]})
 
 
-
-
-df_1_test
-
-
-
-
 start = dt.datetime.strptime('2018-01-01', '%Y-%m-%d')
 end = dt.datetime.strptime('2018-12-31', '%Y-%m-%d')
 indicators['Index'] = df_1_test.loc['2018-12-31','Index']
@@ -124,13 +105,9 @@ indicators['Recent_Peak'] = 'LATER.'
 indicators['MoM'] = df_1_test.loc['2018-12-31','MoM_change']
 indicators['3M_MoM'] = df_1_test.loc['2018-10-01':'2018-12-31','MoM_change'].mean()
 indicators['YoY'] = df_1_test.loc['2018-12-31','YoY_change']
-indicators['3M_MoM'] = df_1_test.loc['2018-10-01':'2018-12-31','MoM_change'].mean()
-
-
 
 
 df_1_test
-
 
 
 indicators
@@ -139,7 +116,6 @@ indicators
 start = dt.datetime.strptime('2018-01-01', '%Y-%m-%d')
 end = dt.datetime.strptime('2018-12-31', '%Y-%m-%d')
 df_1.loc[start:end,'PE_Ratio'].std()
-
 
 
 
@@ -152,7 +128,7 @@ df_1.loc[start:end, 'Index'].ewm(span = 20).mean().plot()
 
 
 
-
+### visualizing the preliminary results
 
 start = dt.datetime.strptime('2014-01-01', '%Y-%m-%d')
 end = dt.datetime.strptime('2020-12-31', '%Y-%m-%d')
