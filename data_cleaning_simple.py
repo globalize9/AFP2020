@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import datetime as dt 
 from itertools import combinations
+from tabulate import tabulate
 
 # set cwd
 os.chdir("C:/Users/yushi/Documents/GitHub/AFP2020")
