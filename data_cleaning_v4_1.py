@@ -38,7 +38,7 @@ all_combinations
 
 
 candidate_pairs = pd.DataFrame({'peaking':[],
-                               'troughng':[]})
+                               'troughing':[]})
 
 def get_RSI_14day(data):
     data.loc[:,'avg_14up'] = 0
@@ -54,7 +54,7 @@ def get_RSI_14day(data):
     return(np.array(df_1_new['RSI']))
 
 
-for i in range(10): #len(all_combinations)):
+for i in range(len(all_combinations)):
     df_1= pd.DataFrame({'Index':[],
                         'PE_Ratio':[],
                         'Div_Diff':[]})
@@ -94,7 +94,7 @@ for i in range(10): #len(all_combinations)):
     
     
     # start = dt.datetime.strptime('2010-01-01', '%Y-%m-%d')
-    end = dt.datetime.strptime('2018-12-31', '%Y-%m-%d')
+    end = dt.datetime.strptime('2019-12-31', '%Y-%m-%d')
     df_1_test = df_1.loc[:end,]
     
     df_1_test.loc[:,'20_day_EWM'] = df_1_test['Index'].ewm(span = 20).mean()
@@ -117,17 +117,18 @@ for i in range(10): #len(all_combinations)):
                               '50_day_test':[0]})
     
     # one year look back period for PE
-    end = dt.datetime.strptime('2019-12-31', '%Y-%m-%d') # we can adjust this to the last date of the data, use this for backtest 
+    end_date = '2019-12-31' # we can adjust this to the last date of the data, use this for backtest 
+    end = dt.datetime.strptime(end_date, '%Y-%m-%d') # we can adjust this to the last date of the data, use this for backtest 
     start = end - dt.timedelta(days = 365)
-    indicators['Index'] = df_1_test.loc['2018-12-31','Index']
-    indicators['RSI'] = df_1_test.loc['2018-12-31','RSI']
+    indicators['Index'] = df_1_test.loc[end,'Index']
+    indicators['RSI'] = df_1_test.loc[end,'RSI']
     indicators['Std.dev_PE'] = df_1_test.loc[start:end,'PE_Ratio'].std()
     indicators['Avg_PE'] = df_1_test.loc[start:end,'PE_Ratio'].mean()
     indicators['PE'] = df_1_test.loc[end,'PE_Ratio']
     indicators['Recent_Peak'] = df_1_test[df_1_test.Peak==1].iloc[-1]['Index']
-    indicators['MoM'] = df_1_test.loc['2018-12-31','MoM_change']
-    indicators['3M_MoM'] = df_1_test.loc['2018-10-01':'2018-12-31','MoM_change'].mean()
-    indicators['YoY'] = df_1_test.loc['2018-12-31','YoY_change']
+    indicators['MoM'] = df_1_test.loc[end,'MoM_change']
+    indicators['3M_MoM'] = df_1_test.loc['2019-10-01':end,'MoM_change'].mean()
+    indicators['YoY'] = df_1_test.loc[end,'YoY_change']
     indicators['Max_YoY'] = df_1_test['YoY_change'].rolling(window = 252).max()[-1]
     indicators['Min_YoY'] = df_1_test['YoY_change'].rolling(window = 252).min()[-1]
     indicators['50_MA'] = df_1_test.iloc[-1]['50_MA']
