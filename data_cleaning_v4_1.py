@@ -60,8 +60,8 @@ for i in range(10): #len(all_combinations)):
                         'Div_Diff':[]})
     
     ###### calculating the technical indicators
-    df_1['Index'] = all_data_2[str(all_combinations[i].split('_')[0])]['PX_OFFICIAL_CLOSE']/all_data_2[str(all_combinations[i].split('_')[1])]['PX_OFFICIAL_CLOSE']
-    df_1['PE_Ratio'] = all_data_2[str(all_combinations[i].split('_')[0])]['BEST_PE_NXT_YR']/all_data_2[str(all_combinations[i].split('_')[1])]['BEST_PE_NXT_YR']
+    df_1['Index'] = all_data_2[str(all_combinations[i].split('_')[0])]['PX_LAST']/all_data_2[str(all_combinations[i].split('_')[1])]['PX_LAST']
+    df_1['PE_Ratio'] = all_data_2[str(all_combinations[i].split('_')[0])]['PE_RATIO']/all_data_2[str(all_combinations[i].split('_')[1])]['PE_RATIO']
     df_1['Div_Diff'] = (all_data_2[str(all_combinations[i].split('_')[0])]['AVERAGE_DIVIDEND_YIELD'] - all_data_2[str(all_combinations[i].split('_')[1])]['AVERAGE_DIVIDEND_YIELD'])*100
     
     # if df_1['Index'].isna().all(): continue 
@@ -89,7 +89,7 @@ for i in range(10): #len(all_combinations)):
     df_1['200Day_diff'] = df_1['Index']/df_1['200_MA'] - 1
     
     
-    df_1 = df_1.dropna()
+    # df_1 = df_1.dropna()
     df_1['RSI'] = get_RSI_14day(df_1)
     
     
@@ -117,7 +117,7 @@ for i in range(10): #len(all_combinations)):
                               '50_day_test':[0]})
     
     # one year look back period for PE
-    end = dt.datetime.strptime('2018-12-31', '%Y-%m-%d') # we can adjust this to the last date of the data, use this for backtest 
+    end = dt.datetime.strptime('2019-12-31', '%Y-%m-%d') # we can adjust this to the last date of the data, use this for backtest 
     start = end - dt.timedelta(days = 365)
     indicators['Index'] = df_1_test.loc['2018-12-31','Index']
     indicators['RSI'] = df_1_test.loc['2018-12-31','RSI']
@@ -136,10 +136,12 @@ for i in range(10): #len(all_combinations)):
     indicators['50_day_test_trough'] = ((df_1_test['50_MA']- df_1_test['200_MA']).rolling(window = 181).max() < 0) [-1]
     
     check_peak = ((indicators['RSI'] >70) & (indicators['PE'] > (indicators['Avg_PE']+indicators['Std.dev_PE']))) \
-        | ((indicators['Index'] - indicators['Recent_Peak'] > indicators['Recent_Peak']*0.02) & ((indicators['MoM']> 0) & (indicators['3M_MoM'] >0))) | ((indicators['YoY'] >=  indicators['Max_YoY']*0.5)[0]) | ((indicators['50_MA']< indicators['200_MA']) & indicators['50_day_test_peak'])
+        | ((indicators['Index'] - indicators['Recent_Peak'] > indicators['Recent_Peak']*0.02) & ((indicators['MoM']> 0) & (indicators['3M_MoM'] >0))) \
+        | ((indicators['YoY'] >=  indicators['Max_YoY']*0.5)[0]) | ((indicators['50_MA']< indicators['200_MA']) & indicators['50_day_test_peak'])
 
     check_trough = ((indicators['RSI'] <30) & (indicators['PE'] < (indicators['Avg_PE']-indicators['Std.dev_PE']))) \
-        | ((indicators['Recent_Peak'] - indicators['Index'] > indicators['Recent_Peak']*0.02) & ((indicators['MoM']< 0) & (indicators['3M_MoM'] <0))) |((indicators['YoY'] <=  indicators['Min_YoY']*0.5)[0])  | ((indicators['50_MA'] > indicators['200_MA']) & (indicators['50_day_test_trough']))
+        | ((indicators['Recent_Peak'] - indicators['Index'] > indicators['Recent_Peak']*0.02) & ((indicators['MoM']< 0) & (indicators['3M_MoM'] <0))) \
+        |((indicators['YoY'] <=  indicators['Min_YoY']*0.5)[0])  | ((indicators['50_MA'] > indicators['200_MA']) & (indicators['50_day_test_trough']))
     
     if (check_peak[0]== True):
         candidate_pairs = candidate_pairs.append({'peaking':all_combinations[i]}, ignore_index = True)
