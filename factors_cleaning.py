@@ -10,7 +10,7 @@ import numpy as np
 import os
 
 # set path
-os.chdir(r'C:\Users\yushi\Downloads\AFP2020-master\AFP2020-master')
+os.chdir(r'C:\Users\yushi\Documents\GitHub\AFP2020')
 
 # read in macro and feedstock factors
 macro_factors_raw = pd.read_excel('BBGFactors.xlsx', sheet_name = 'macroFactors')
@@ -23,8 +23,10 @@ def CleanFactors(df, cut_off_date):
     if len(date_loc) == 0: return 'Invalid date'
     date_loc = date_loc[0]
     df = df.loc[df.index[:date_loc]]
+    df = df.drop('Dates', axis = 1)
+    df = df.ffill()
     return df
 
-cut_off_date = '2020-08-20'
+cut_off_date = '2019-12-31'
 macro_factors = CleanFactors(macro_factors_raw, cut_off_date)
 feedstock_factors = CleanFactors(feedstock_factors_raw, cut_off_date)
