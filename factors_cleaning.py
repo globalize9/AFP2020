@@ -25,8 +25,11 @@ def CleanFactors(df, cut_off_date):
     df = df.loc[df.index[:date_loc]]
     df = df.drop('Dates', axis = 1)
     df = df.ffill()
+    df = df.dropna(axis = 1)
+    df = df.ffill()
     return df
 
 cut_off_date = '2019-12-31'
 macro_factors = CleanFactors(macro_factors_raw, cut_off_date)
 feedstock_factors = CleanFactors(feedstock_factors_raw, cut_off_date)
+
