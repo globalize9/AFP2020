@@ -8,8 +8,32 @@ Created on Mon Sep  7 21:33:55 2020
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import json 
 # import factors_cleaning # not sure the best way to connect the factors_cleaning script to this
 # maybe copy/paste???
+
+# import top 10 pairs
+with open('top10.txt') as json_file:
+    top10_pairs = json.load(json_file)
+
+my_file = open('top10.txt')
+content = my_file.read()
+content.split(',')
+
+import csv
+with open('top10.txt'):
+    
+with open('top10.txt', newline = '') as games:                                                                                          
+	game_reader = csv.reader(games, delimiter='\t')
+	for game in game_reader:
+		print(game)
+    
+# data is the list of pairs
+# data.txt is the txt file you have created before to save the file into
+import json
+with open('data.txt', 'w') as outfile:
+    json.dump(data, outfile)
+
 
 # insert code to read the candidate pairs list
 pair_names = 'AXTA US Equity_HXL US Equity'
