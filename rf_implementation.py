@@ -50,6 +50,9 @@ top10_pairs = ['AXTA US Equity_HXL US Equity','AVD US Equity_PRLB US Equity','AV
                'KOP US Equity_TSE US Equity','AVD US Equity_TSE US Equity''AVD US Equity_BAS GR Equity','AXTA US Equity_NZYMB DC Equity',
                'AVD US Equity_CBT US Equity','GPRE US Equity_RPM US Equity','AVD US Equity_ADM US Equity']
 
+pairs_dict
+
+
 for i in range(len(top10_pairs)):
     # insert code to read the candidate pairs list
     pair_names = top10_pairs[i]
@@ -78,8 +81,8 @@ for i in range(len(top10_pairs)):
     temp_feedstock = temp_feedstock.fillna(0)
     
     # macrofactors test first
-    X = temp_macro.values
-    y = np.ravel(index_level.values)
+    X = temp_macro
+    y = np.ravel(index_level)
     
     # preparing data
     from sklearn.model_selection import train_test_split
@@ -110,6 +113,8 @@ for i in range(len(top10_pairs)):
     forest_CV.best_estimator_
     forest_CV.best_params_
     
+    forest.fit(X_train, y_train)
+    forest.feature_importances_
     
     # Evaluation of the algo
     from sklearn import metrics
@@ -117,6 +122,12 @@ for i in range(len(top10_pairs)):
     print('Mean Absolute Error:', metrics.mean_absolute_error(y_test, y_pred))
     print('Mean Squared Error:', metrics.mean_squared_error(y_test, y_pred))
     print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(y_test, y_pred)))
+
+
+# I think the importance plot is needed?
+# https://machinelearningmastery.com/calculate-feature-importance-with-python/
+
+
 
 
 # =============================================================================
