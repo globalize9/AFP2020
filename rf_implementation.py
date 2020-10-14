@@ -7,6 +7,7 @@ Created on Mon Sep  7 21:33:55 2020
 
 import pandas as pd
 import numpy as np
+import datetime
 import matplotlib.pyplot as plt
 import json
 
@@ -47,11 +48,49 @@ top10_pairs = ['AXTA US Equity_HXL US Equity','AVD US Equity_PRLB US Equity','AV
                'NZYMB DC Equity_OEC US Equity','CINR US Equity_OLN US Equity','KOP US Equity_MMM US Equity','MMM US Equity_OEC US Equity',
                'AXTA US Equity_KWR US Equity','GPRE US Equity_KWR US Equity','AXTA US Equity_DD US Equity','AXTA US Equity_MMM US Equity',
                'AXTA US Equity_HXL US Equity','GPRE US Equity_TSE US Equity','GPRE US Equity_PRLB US Equity','DCI US Equity_KWR US Equity',
-               'KOP US Equity_TSE US Equity','AVD US Equity_TSE US Equity''AVD US Equity_BAS GR Equity','AXTA US Equity_NZYMB DC Equity',
+               'KOP US Equity_TSE US Equity','AVD US Equity_TSE US Equity', 'AVD US Equity_BAS GR Equity','AXTA US Equity_NZYMB DC Equity',
                'AVD US Equity_CBT US Equity','GPRE US Equity_RPM US Equity','AVD US Equity_ADM US Equity']
 
-pairs_dict
+# create a pairs_dict
 
+lag_factors = pd.read_csv(r'C:\Users\yushi\Documents\GitHub\AFP2020\stepwise_factors.csv')
+lag_factors.columns
+
+def CheckDate(date_in,this_list):
+    while date_in not in this_list:
+        date_in -= datetime.timedelta(days = 1)
+    return date_in
+
+## move this section of code into the body
+
+# need a day input
+# puting in an arbitrary date for now
+input_date = datetime.date(2019,12,30)
+
+nameP = top10_pairs[0]
+row_num = np.where(nameP == lag_factors.pair)[0][0]
+lag_factor_names = lag_factors.loc[row_num,['factor_1','factor_2','factor_3','factor_4','factor_5']]
+lag_factor_times = lag_factors.loc[row_num,['lag_1','lag_2','lag_3','lag_4','lag_5']]
+days_lag = lag_factor_times * 21 # converting to days equivalent
+spec_dates = [input_date - datetime.timedelta(days = int(x)) for x in days_lag.tolist()]
+lag_dates = [CheckDate(x, index_level.index) for x in spec_dates]
+
+X_vars = pd.DataFrame(np.NaN, index = ['0'], columns = lag_factor_names.tolist())
+
+for z in range(len(lag_factor_names)):
+    if lag_factor_names[z] in temp_macro.columns:
+        X_vars[lag_factor_names[z]] = temp_macro.loc[lag_dates[z], lag_factor_names[z]]
+    else:
+        X_vars[lag_factor_names[z]] = temp_feedstock.loc[lag_dates[z], lag_factor_names[z]]
+
+        
+
+        
+
+# 0'th pair is same as 24
+
+# factors are the actual values @ lag
+# Y -> 6 periods ahead
 
 for i in range(len(top10_pairs)):
     # insert code to read the candidate pairs list
