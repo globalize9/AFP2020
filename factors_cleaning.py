@@ -7,10 +7,6 @@ This is a temporary script file.
 
 import pandas as pd
 import numpy as np
-import os
-
-# set path
-os.chdir(r'C:\Users\yushi\Documents\GitHub\AFP2020')
 
 # read in macro and feedstock factors
 macro_factors_raw = pd.read_excel('BBGFactors.xlsx', sheet_name = 'macroFactors')
@@ -26,7 +22,6 @@ def CleanFactors(df, cut_off_date):
     df = df.drop('Dates', axis = 1)
     df = df.ffill()
     df = df.dropna(axis = 1)
-    df = df.ffill()
     return df
 
 cut_off_date = '2019-12-31'

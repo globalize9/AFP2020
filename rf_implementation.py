@@ -11,7 +11,11 @@ import datetime
 import matplotlib.pyplot as plt
 import json
 
-# make sure to run the factors_cleaning.py code first!!
+import os
+# set path
+os.chdir(r'C:\Users\yushi\Documents\GitHub\AFP2020')
+
+import factors_cleaning # runs the factors_cleaning.py code first
 
 # =============================================================================
 # # import factors_cleaning # not sure the best way to connect the factors_cleaning script to this
@@ -109,8 +113,8 @@ for i in range(len(top10_pairs)):
     index_level = index_level.loc[macro_factors.index] # aligns the y data with the x data
     index_level = index_level.dropna()
     
-    temp_macro = macro_factors.loc[index_level.index]
-    temp_feedstock = feedstock_factors.loc[index_level.index]
+    temp_macro = factors_cleaning.macro_factors.loc[index_level.index]
+    temp_feedstock = factors_cleaning.feedstock_factors.loc[index_level.index]
     
     # we will drop all indicators that do not have 10 years of data completely
     # forward fill on the remaining to close the NAs gap
