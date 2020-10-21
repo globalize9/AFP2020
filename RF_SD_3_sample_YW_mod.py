@@ -9,21 +9,13 @@ Created on Wed Mar 25 20:14:11 2020
 import pandas as pd
 import numpy as np
 
-features = pd.read_csv('train_PCA.csv')
-features.head(5)
-features = features.loc[features['Outlier Flag'] == 0] 
-# Use numpy to convert to arrays
+
 
 # labels are the values we want to predict
-# Store Ids of houses
-labels = np.array(features['target'])
-Ids = np.array(features['ID'])
+labels = np.array(features['PX_LAST'])
 
 # Remove the labels from the features
-# axis 1 refers to the columns
-features= features.drop('target', axis = 1)
-features= features.drop('ID', axis = 1)
-features = features.drop('Outlier Flag', axis = 1)
+features = features.drop('PX_LAST', axis = 1)
 
 # Saving feature names for later use
 feature_list = list(features.columns)
@@ -32,11 +24,6 @@ feature_list = list(features.columns)
 features = np.array(features)
 from sklearn.ensemble import RandomForestRegressor
 rf = RandomForestRegressor(random_state = 42)
-from pprint import pprint
-
-# Look at parameters used by our current forest
-print('Parameters currently in use:\n')
-pprint(rf.get_params())
 from sklearn.model_selection import RandomizedSearchCV
 
 # Number of trees in random forest
@@ -59,7 +46,6 @@ random_grid = {'n_estimators':n_estimators,
                'min_samples_split':min_samples_split,
                'min_samples_leaf':min_samples_leaf,
                'bootstrap':bootstrap}
-pprint(random_grid)
 
 t_features = features
 t_labels = labels
@@ -75,7 +61,7 @@ rf_random = RandomizedSearchCV(estimator = rf, param_distributions = random_grid
 rf_random.fit(t_features, t_labels)
 
 rf_random.best_params_
-
+# the random search picks different combinations, whereas the grid search is more refinement but slower
 
 
 # Using Skicit-learn to split data into training and testing sets
@@ -87,12 +73,23 @@ from sklearn.model_selection import GridSearchCV
 # Create the parameter grid based on the results of random search 
 param_grid = {
     'bootstrap': [True],
-    'max_depth': [46,60,100],
-    'max_features': ['auto'],
+    'max_depth': [60],
+    'max_features': ['sqrt'],
     'min_samples_leaf': [5,15],
-    'min_samples_split': [45, 50, 55],
-    'n_estimators': [806,850,1000]
+    'min_samples_split': [60],
+    'n_estimators': [1438]
 }
+
+# =============================================================================
+# param_grid = {
+#     'bootstrap': [True],
+#     'max_depth': [46,60,100],
+#     'max_features': ['sqrt'],
+#     'min_samples_leaf': [5,15],
+#     'min_samples_split': [45, 50, 55],
+#     'n_estimators': [806,850,1000]
+# }
+# =============================================================================
 # Create a based model
 rf = RandomForestRegressor()
 # Instantiate the grid search model
@@ -116,8 +113,8 @@ def evaluate(model, test_features, test_labels):
     print('Accuracy = {:0.2f}%.'.format(accuracy))
     return accuracy
 
-grid_accuracy = evaluate (best_grid, test_features, test_labels)
-grid_accuracy = evaluate (best_grid, train_features, train_labels)
+grid_accuracy = evaluate(best_grid, test_features, test_labels)
+grid_accuracy = evaluate(best_grid, train_features, train_labels)
 
 def importance(model):
     fi = pd.DataFrame({'feature': feature_list,
@@ -127,17 +124,14 @@ def importance(model):
 imp = importance (best_grid)
 
 #Getting Predictions 
-test_features_final = pd.read_csv('test_PCA_48.csv')
-test_features_final.head(5)
-Ids_test = np.array(test_features_final['ID'])
-test_features_final= test_features_final.drop('ID', axis = 1)
+
 model = best_grid
-predictions_final = np.exp( model.predict(test_features_final))
-submission =pd. DataFrame(np.array(list(zip(Ids_test, predictions_final))))
-submission.to_csv('RF_out2.csv')
+predictions_final = np.exp(model.predict(np.array(last_day_X).reshape(1,5)))
+np.sign(predictions_final[0])
+# +'ve, therefore peaking
 
-
-
+## logistics is % change instead.... (6 month ahead - today)/today's level
+## check to see if it is greater than 15% threshold 
 
 
 

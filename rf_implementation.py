@@ -15,7 +15,7 @@ import os
 # set path
 os.chdir(r'C:\Users\yushi\Documents\GitHub\AFP2020')
 
-import factors_cleaning # runs the factors_cleaning.py code first
+# import factors_cleaning # runs the factors_cleaning.py code first
 
 # =============================================================================
 # # import factors_cleaning # not sure the best way to connect the factors_cleaning script to this
@@ -67,7 +67,7 @@ def CheckDate(date_in,this_list):
 
 ## move this section of code into the body
 
-# need a day input
+# need a day input, [last day of the training dataset]
 # puting in an arbitrary date for now
 input_date = datetime.date(2019,12,30)
 
@@ -79,15 +79,49 @@ days_lag = lag_factor_times * 21 # converting to days equivalent
 spec_dates = [input_date - datetime.timedelta(days = int(x)) for x in days_lag.tolist()]
 lag_dates = [CheckDate(x, index_level.index) for x in spec_dates]
 
-X_vars = pd.DataFrame(np.NaN, index = ['0'], columns = lag_factor_names.tolist())
+# =============================================================================
+# X_vars = dict.fromkeys(lag_factor_names, np.NaN)
+# 
+# 
+# for z in range(len(lag_factor_names)):
+#     if lag_factor_names[z] in temp_macro.columns:
+#         temp = temp_macro.loc[:,lag_factor_names[z]].copy()
+#         temp = temp.shift(int(days_lag[z])) # takes care of the lag
+#         temp = pd.DataFrame(temp, index = index_level.index)
+#         X_vars[lag_factor_names[z]] = temp
+#     else:
+#         temp = temp_feedstock.loc[:,lag_factor_names[z]].copy()
+#         temp = temp.shift(int(days_lag[z])) # takes care of the lag
+#         X_vars[lag_factor_names[z]] = temp
+# =============================================================================
 
+
+X_vars = pd.DataFrame(np.NaN, index = index_level.index, columns = lag_factor_names.tolist())
+
+# reading in the time series and lagging it by that much
 for z in range(len(lag_factor_names)):
     if lag_factor_names[z] in temp_macro.columns:
-        X_vars[lag_factor_names[z]] = temp_macro.loc[lag_dates[z], lag_factor_names[z]]
+        temp = temp_macro.loc[:,lag_factor_names[z]].copy()
+        temp = temp.shift(int(days_lag[z])) # takes care of the lag
+        X_vars.loc[:,lag_factor_names[z]] = temp
     else:
-        X_vars[lag_factor_names[z]] = temp_feedstock.loc[lag_dates[z], lag_factor_names[z]]
+        temp = temp_feedstock.loc[:,lag_factor_names[z]].copy()
+        temp = temp.shift(int(days_lag[z])) # takes care of the lag
+        X_vars.loc[:,lag_factor_names[z]] = temp
 
-        
+X_vars = X_vars.dropna(axis = 0)
+
+Y_var = index_level.shift(periods = -21*6) - index_level # 6 months forward
+
+# matching the dates
+joint_df = X_vars.merge(Y_var, how = 'outer', left_index = True, right_index = True)
+last_day_X = joint_df.iloc[-1,:].drop('PX_LAST', axis = 0)
+joint_df = joint_df.dropna()
+features = joint_df.copy()
+# switch to RF SD code
+
+y = joint_df.iloc[:,-1]
+X = joint_df.drop('PX_LAST', axis = 1)
 
         
 
@@ -113,8 +147,10 @@ for i in range(len(top10_pairs)):
     index_level = index_level.loc[macro_factors.index] # aligns the y data with the x data
     index_level = index_level.dropna()
     
-    temp_macro = factors_cleaning.macro_factors.loc[index_level.index]
-    temp_feedstock = factors_cleaning.feedstock_factors.loc[index_level.index]
+    # temp_macro = factors_cleaning.macro_factors.loc[index_level.index]
+    # temp_feedstock = factors_cleaning.feedstock_factors.loc[index_level.index]
+    temp_macro = macro_factors.loc[index_level.index]
+    temp_feedstock = feedstock_factors.loc[index_level.index]
     
     # we will drop all indicators that do not have 10 years of data completely
     # forward fill on the remaining to close the NAs gap
