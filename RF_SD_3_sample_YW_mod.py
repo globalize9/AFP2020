@@ -9,8 +9,6 @@ Created on Wed Mar 25 20:14:11 2020
 import pandas as pd
 import numpy as np
 
-
-
 # labels are the values we want to predict
 labels = np.array(features['PX_LAST'])
 
@@ -27,11 +25,11 @@ rf = RandomForestRegressor(random_state = 42)
 from sklearn.model_selection import RandomizedSearchCV
 
 # Number of trees in random forest
-n_estimators = [int(x) for x in np.linspace(start = 500, stop = 1500, num = 50)]
+n_estimators = [int(x) for x in np.linspace(start = 25, stop = 150, num = 15)]
 # Number of features to consider at every split
 max_features = ['auto', 'sqrt']
 # Maximum number of levels in tree
-max_depth = [int(x) for x in np.linspace(40, 100, num = 10)]
+max_depth = [int(x) for x in np.linspace(3, 15, num = 2)]
 max_depth.append(None)
 # Minimum number of samples required to split a node
 min_samples_split = [50,60]
@@ -46,7 +44,7 @@ random_grid = {'n_estimators':n_estimators,
                'min_samples_split':min_samples_split,
                'min_samples_leaf':min_samples_leaf,
                'bootstrap':bootstrap}
-
+start_time = datetime.datetime.now()
 t_features = features
 t_labels = labels
 # Use the random grid to search for best hyperparameters
@@ -61,8 +59,10 @@ rf_random = RandomizedSearchCV(estimator = rf, param_distributions = random_grid
 rf_random.fit(t_features, t_labels)
 
 rf_random.best_params_
-# the random search picks different combinations, whereas the grid search is more refinement but slower
 
+# the random search picks different combinations, whereas the grid search is more refinement but slower
+end = datetime.datetime.now()
+print(end - start_time)
 
 # Using Skicit-learn to split data into training and testing sets
 from sklearn.model_selection import train_test_split
@@ -70,14 +70,15 @@ from sklearn.model_selection import train_test_split
 train_features, test_features, train_labels, test_labels = train_test_split(features, labels, test_size = 0.20, random_state = 42)
 
 from sklearn.model_selection import GridSearchCV
-# Create the parameter grid based on the results of random search 
+# Create the parameter grid based on the results of random search
+############ need2make this dynamic ############## 
 param_grid = {
     'bootstrap': [True],
-    'max_depth': [60],
+    'max_depth': [3],
     'max_features': ['sqrt'],
     'min_samples_leaf': [5,15],
     'min_samples_split': [60],
-    'n_estimators': [1438]
+    'n_estimators': [33]
 }
 
 # =============================================================================
