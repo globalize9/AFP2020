@@ -77,7 +77,9 @@ lag_factor_names = lag_factors.loc[row_num,['factor_1','factor_2','factor_3','fa
 lag_factor_times = lag_factors.loc[row_num,['lag_1','lag_2','lag_3','lag_4','lag_5']]
 days_lag = lag_factor_times * 21 # converting to days equivalent
 spec_dates = [input_date - datetime.timedelta(days = int(x)) for x in days_lag.tolist()]
-lag_dates = [CheckDate(x, index_level.index) for x in spec_dates]
+# lag_dates = [CheckDate(x, index_level.index) for x in spec_dates]
+# need2fix lag_dates
+lag_dates = spec_dates
 
 # =============================================================================
 # X_vars = dict.fromkeys(lag_factor_names, np.NaN)
@@ -158,6 +160,8 @@ for i in range(len(top10_pairs)):
     # replacing na's with 0s
     temp_macro = temp_macro.fillna(0)
     temp_feedstock = temp_feedstock.fillna(0)
+    
+    ############ switch to RF_SD_3_sample_YW_mod.py #####################
     
     # macrofactors test first
     X = temp_macro
