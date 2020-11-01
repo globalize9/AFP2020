@@ -29,23 +29,25 @@ def CleanFactors(df, cut_off_date):
     return df
 
 cut_off_date = '2019-12-31'
-macro_factors = CleanFactors(macro_factors_raw, cut_off_date)
-feedstock_factors = CleanFactors(feedstock_factors_raw, cut_off_date)
+macro_factors_round1 = CleanFactors(macro_factors_raw, cut_off_date)
+feedstock_factors_round1 = CleanFactors(feedstock_factors_raw, cut_off_date)
 
 # YoY adjustment
-def YoYClean(macro_factors):
-    macro_names = macro_factors.columns.tolist()
+def YoYClean(factors_df):
+    macro_names = factors_df.columns.tolist()
     pct_yoy = ['YoY' in x for x in macro_names]
-    macro_factors_adj = pd.DataFrame(np.NaN, index = macro_factors.index, columns = macro_names)
+    factors_df_adj = pd.DataFrame(np.NaN, index = factors_df.index, columns = macro_names)
     for i in range(len(macro_names)):
         if pct_yoy[i] == True:
-            macro_factors_adj.iloc[:,i] = (macro_factors.iloc[:,i] / macro_factors.iloc[:,i].shift(252) - 1) * 100
+            factors_df_adj.iloc[:,i] = (factors_df.iloc[:,i] / factors_df.iloc[:,i].shift(252) - 1) * 100
         else:
-            macro_factors_adj.iloc[:,i] = macro_factors.iloc[:,i]
+            factors_df_adj.iloc[:,i] = factors_df.iloc[:,i]
     
-    macro_factors_adj = macro_factors_adj.dropna(axis = 0) # drop observations instead of columns this time
-    return macro_factors_adj
+    factors_df_adj = factors_df_adj.dropna(axis = 0) # drop observations instead of columns this time
+    return factors_df_adj
 
-macro_factors_adj = YoYClean(macro_factors)
-feedstock_factors_adj = YoYClean(feedstock_factors)
+macro_factors = YoYClean(macro_factors_round1)
+feedstock_factors = YoYClean(feedstock_factors_round1)
+feedstock_factors = (feedstock_factors_round1 / feedstock_factors_round1.shift(252) - 1) * 100
+feedstock_factors = feedstock_factors.dropna(axis = 0)
 
