@@ -46,8 +46,8 @@ def YoYClean(factors_df):
     factors_df_adj = factors_df_adj.dropna(axis = 0) # drop observations instead of columns this time
     return factors_df_adj
 
-macro_factors = YoYClean(macro_factors_round1)
-feedstock_factors = YoYClean(feedstock_factors_round1)
+macro_factors = YoYClean(macro_factors_round1) / 100
+feedstock_factors = YoYClean(feedstock_factors_round1) 
 feedstock_factors = (feedstock_factors_round1 / feedstock_factors_round1.shift(252) - 1) * 100
-feedstock_factors = feedstock_factors.dropna(axis = 0)
+feedstock_factors = feedstock_factors.dropna(axis = 0) / 100
 
