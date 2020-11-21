@@ -397,12 +397,6 @@ price_data = all_data_2.xs('PX_LAST', axis = 1, level = 1, drop_level = False) #
 
 # In[5]:
 
-
-import pandas as pd
-import numpy as np
-import os
-
-
 # read in macro and feedstock factors
 macro_factors_raw = pd.read_excel('BBGFactors.xlsx', sheet_name = 'macroFactors')
 feedstock_factors_raw = pd.read_excel('BBGFactors.xlsx', sheet_name = 'feedstockFactors')
@@ -417,12 +411,31 @@ def CleanFactors(df, cut_off_date):
     df = df.drop('Dates', axis = 1)
     df = df.ffill()
     df = df.dropna(axis = 1)
-    df = df.ffill()
     return df
 
 cut_off_date = '2019-12-31'
-macro_factors = CleanFactors(macro_factors_raw, cut_off_date)
-feedstock_factors = CleanFactors(feedstock_factors_raw, cut_off_date)
+macro_factors_round1 = CleanFactors(macro_factors_raw, cut_off_date)
+feedstock_factors_round1 = CleanFactors(feedstock_factors_raw, cut_off_date)
+
+# YoY adjustment
+def YoYClean(factors_df):
+    macro_names = factors_df.columns.tolist()
+    pct_yoy = ['YoY' in x for x in macro_names]
+    factors_df_adj = pd.DataFrame(np.NaN, index = factors_df.index, columns = macro_names)
+    for i in range(len(macro_names)):
+        if pct_yoy[i] == True:
+            factors_df_adj.iloc[:,i] = (factors_df.iloc[:,i] / factors_df.iloc[:,i].shift(252) - 1) * 100
+        else:
+            factors_df_adj.iloc[:,i] = factors_df.iloc[:,i]
+    
+    factors_df_adj = factors_df_adj.dropna(axis = 0) # drop observations instead of columns this time
+    return factors_df_adj
+
+macro_factors = YoYClean(macro_factors_round1) / 100
+feedstock_factors = YoYClean(feedstock_factors_round1) 
+feedstock_factors = (feedstock_factors_round1 / feedstock_factors_round1.shift(252) - 1) * 100
+feedstock_factors = feedstock_factors.dropna(axis = 0) / 100
+
 
 
 # # Stepwise Regression
