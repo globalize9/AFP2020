@@ -18,6 +18,8 @@ from IPython.display import clear_output
 import time
 from sklearn.linear_model import LinearRegression
 import scipy.stats as sp
+import pickle
+
 
 
 # # Getting Candidate Pairs
@@ -607,10 +609,10 @@ def CheckDate(date_in,this_list):
         date_in -= dt.timedelta(days = 1)
     return date_in
 
-## move this section of code into the body
 
+prediction_direction = dict.fromkeys(top10_pairs)
 
-for i in range(len(top10_pairs)):
+for i in [x for x in range(len(top10_pairs)) if x != 3]:
     # insert code to read the candidate pairs list
     pair_names = top10_pairs[i]
     pair_names = pair_names.split('_')
@@ -649,25 +651,8 @@ for i in range(len(top10_pairs)):
     lag_factor_times = lag_factors.loc[row_num,['lag_1','lag_2','lag_3','lag_4','lag_5']]
     days_lag = lag_factor_times * 21 # converting to days equivalent
     spec_dates = [input_date - dt.timedelta(days = int(x)) for x in days_lag.tolist()]
-    # lag_dates = [CheckDate(x, index_level.index) for x in spec_dates]
-    # need2fix lag_dates
     lag_dates = spec_dates
     
-    # =============================================================================
-    # X_vars = dict.fromkeys(lag_factor_names, np.NaN)
-    # 
-    # 
-    # for z in range(len(lag_factor_names)):
-    #     if lag_factor_names[z] in temp_macro.columns:
-    #         temp = temp_macro.loc[:,lag_factor_names[z]].copy()
-    #         temp = temp.shift(int(days_lag[z])) # takes care of the lag
-    #         temp = pd.DataFrame(temp, index = index_level.index)
-    #         X_vars[lag_factor_names[z]] = temp
-    #     else:
-    #         temp = temp_feedstock.loc[:,lag_factor_names[z]].copy()
-    #         temp = temp.shift(int(days_lag[z])) # takes care of the lag
-    #         X_vars[lag_factor_names[z]] = temp
-    # =============================================================================
     
     
     X_vars = pd.DataFrame(np.NaN, index = index_level.index, columns = lag_factor_names.tolist())
@@ -716,7 +701,6 @@ for i in range(len(top10_pairs)):
     max_features = ['auto', 'sqrt']
     # Maximum number of levels in tree
     max_depth = [int(x) for x in np.linspace(3, 15, num = 2)]
-    max_depth.append(None)
     # Minimum number of samples required to split a node
     min_samples_split = [50,60]
     # Minimum number of samples required at each leaf node
@@ -756,28 +740,21 @@ for i in range(len(top10_pairs)):
     train_features, test_features, train_labels, test_labels = train_test_split(features, labels, test_size = 0.20, random_state = 42)
     
     from sklearn.model_selection import GridSearchCV
-    # Create the parameter grid based on the results of random search
-    ############ need2make this dynamic ############## 
-    param_grid = {
-        'bootstrap': [True],
-        'max_depth': [3],
-        'max_features': ['sqrt'],
-        'min_samples_leaf': [5,15],
-        'min_samples_split': [60],
-        'n_estimators': [33]
-    }
+    # Create the parameter grid based on the results of random search    
+    def GridAdjust(rf_best_params):
+        temp_grid = rf_best_params.copy()
+        p_grid = temp_grid.copy()
+        p_grid['max_depth'] = [temp_grid['max_depth']-1, temp_grid['max_depth']+1]
+        p_grid['min_samples_leaf'] = [max(temp_grid['min_samples_leaf']-5,1), temp_grid['min_samples_leaf']+5]
+        p_grid['min_samples_split'] = [max(temp_grid['min_samples_split']-10,1), temp_grid['min_samples_split']+10]
+        p_grid['n_estimators'] = [max(temp_grid['n_estimators']-15,1), temp_grid['n_estimators']+15]
+        p_grid['max_features'] = [temp_grid['max_features']]
+        p_grid['bootstrap'] = [temp_grid['bootstrap']]
+        return p_grid
     
-    # =============================================================================
-    # param_grid = {
-    #     'bootstrap': [True],
-    #     'max_depth': [46,60,100],
-    #     'max_features': ['sqrt'],
-    #     'min_samples_leaf': [5,15],
-    #     'min_samples_split': [45, 50, 55],
-    #     'n_estimators': [806,850,1000]
-    # }
-    # =============================================================================
-    # Create a based model
+    param_grid = GridAdjust(rf_random.best_params_)
+    
+    # Create a base model
     rf = RandomForestRegressor()
     # Instantiate the grid search model
     grid_search = GridSearchCV(estimator = rf, param_grid = param_grid, 
@@ -792,38 +769,35 @@ for i in range(len(top10_pairs)):
         predictions = model.predict(test_features)
         errors = abs(predictions - test_labels)
         mape = 100 * np.mean(errors / test_labels)
-        accuracy = 100 - mape
         RMSE = np.sqrt(np.mean(np.square(abs(predictions - test_labels))))
         print('Model Performance')
-        print('Average Error: {:0.4f} degrees.'.format(np.mean(errors)))
-        print('RMS Error: {:0.4f} degrees.'.format(RMSE))
-        print('Accuracy = {:0.2f}%.'.format(accuracy))
-        return accuracy
+        print('Average Error: {:0.4f}'.format(np.mean(errors)))
+        print('RMS Error: {:0.4f}'.format(RMSE))
+        return mape
     
-    grid_accuracy = evaluate(best_grid, test_features, test_labels)
-    grid_accuracy = evaluate(best_grid, train_features, train_labels)
+    grid_test_mape = evaluate(best_grid, test_features, test_labels)
+    grid_train_mape = evaluate(best_grid, train_features, train_labels)
     
-    def importance(model):
-        fi = pd.DataFrame({'feature': feature_list,
-                       'importance': model.feature_importances_})
-        return fi
-    
-    imp = importance (best_grid)
-    
-    #Getting Predictions 
-    
-    model = best_grid
-    predictions_final = np.exp(model.predict(np.array(last_day_X).reshape(1,5)))
-    np.sign(predictions_final[0])
+    predictions_final = best_grid.predict(np.array(last_day_X).reshape(1,5))
+    prediction_direction[top10_pairs[i]] = np.sign(predictions_final[0])
     # +'ve, therefore peaking
     
     ## logistics is % change instead.... (6 month ahead - today)/today's level
     ## check to see if it is greater than 15% threshold 
+
+# pair 3 is blank...filling it in for now
     
-    
-    
-    
-    
+# saving pickle 
+filename = 'prediction_direction'
+outfile = open(filename, 'wb')
+pickle.dump(prediction_direction, outfile)
+outfile.close()
+
+# opening pickle
+infile = open('prediction_direction','rb')
+new_dict = pickle.load(infile)
+infile.close()
+
     
     
     
