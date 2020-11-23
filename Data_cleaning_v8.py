@@ -612,6 +612,28 @@ def CheckDate(date_in,this_list):
 
 prediction_direction = dict.fromkeys(top10_pairs)
 
+# reading in raw data, adapted from data_cleaning
+all_data_2 = pd.read_excel("data_0719.xlsx", sheet_name = "Sheet5", header = [0,1])
+all_data_2.index = all_data_2['Unnamed: 0_level_0']['Dates']
+all_data_2_raw = all_data_2.drop(columns ='Unnamed: 0_level_0' )
+price_data = all_data_2.xs('PX_LAST', axis = 1, level = 1, drop_level = False) # subsetting to PX_LAST only
+
+def PlotIndex(i):
+    pair_names = top10_pairs[i]
+    pair_names = pair_names.split('_')
+    
+    # calculating the index as the ratio of PX_LAST
+    index_level = price_data[pair_names[0]] / price_data[pair_names[1]]
+    index_level = index_level.dropna()
+    
+    index_level.plot(title = top10_pairs[i])
+
+for i in [x for x in range(len(top10_pairs)) if x != 3]:
+    PlotIndex(-1)
+
+# could also add a portion for back test...i.e. calculate the actual results vs. predicted
+    
+
 for i in [x for x in range(len(top10_pairs)) if x != 3]:
     # insert code to read the candidate pairs list
     pair_names = top10_pairs[i]
