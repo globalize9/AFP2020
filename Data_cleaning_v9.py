@@ -646,12 +646,14 @@ for i in [x for x in range(len(top10_pairs)) if x != 3]:
     pair_names = top10_pairs[i]
     pair_names = pair_names.split('_')
     
-    # reading in raw data, adapted from data_cleaning
-    all_data_2 = pd.read_excel("data_0719.xlsx", sheet_name = "Sheet5", header = [0,1])
-    all_data_2.index = all_data_2['Unnamed: 0_level_0']['Dates']
-    all_data_2_raw = all_data_2.drop(columns ='Unnamed: 0_level_0' )
-    all_data_2 = all_data_2_raw[all_data_2_raw.index <= "2019-12-31"] # specify end_date
-    price_data = all_data_2.xs('PX_LAST', axis = 1, level = 1, drop_level = False) # subsetting to PX_LAST only
+# =============================================================================
+#     # reading in raw data, adapted from data_cleaning
+#     all_data_2 = pd.read_excel("data_0719.xlsx", sheet_name = "Sheet5", header = [0,1])
+#     all_data_2.index = all_data_2['Unnamed: 0_level_0']['Dates']
+#     all_data_2_raw = all_data_2.drop(columns ='Unnamed: 0_level_0' )
+#     all_data_2 = all_data_2_raw[all_data_2_raw.index <= "2019-12-31"] # specify end_date
+#     price_data = all_data_2.xs('PX_LAST', axis = 1, level = 1, drop_level = False) # subsetting to PX_LAST only
+# =============================================================================
     
     # calculating the index as the ratio of PX_LAST
     index_level = price_data[pair_names[0]] / price_data[pair_names[1]]
@@ -905,4 +907,195 @@ outfile.close()
 
 
 
+####### commodities regression 
+# using retail gasoline price in-lieu of Gasoline (RBOB) due to incomplete data 
+# that could be remedied by not screening as intensively in the previous macro dataset screen
+commodities_X = feedstock_factors[['Corn','Cotton','Natural Gas','Oil (Brent)','Retail Gasoline Price','Soy','Sugar','Wheat']]
+commodities_X_lag6 = commodities_X.shift(periods = 6*21)
+commodities = lag_factors.copy()
+commodities = commodities.drop('Unnamed: 0', axis = 1)
 
+
+for i in range(len(commodities)):
+    # insert code to read the stepwise pairs list
+    pair_names = commodities.loc[i,'pair']
+    pair_names = pair_names.split('_')
+    
+    # calculating the index as the ratio of PX_LAST
+    index_level = price_data[pair_names[0]] / price_data[pair_names[1]]
+    index_level = index_level.loc[macro_factors.index] # aligns the y data with the x data
+    index_level = index_level.dropna()
+    
+# =============================================================================
+#     # temp_macro = factors_cleaning.macro_factors.loc[index_level.index]
+#     # temp_feedstock = factors_cleaning.feedstock_factors.loc[index_level.index]
+#     temp_macro = macro_factors.loc[index_level.index]
+#     temp_feedstock = feedstock_factors.loc[index_level.index]
+#     
+#     # we will drop all indicators that do not have 10 years of data completely
+#     # forward fill on the remaining to close the NAs gap
+#     
+#     # replacing na's with 0s
+#     temp_macro = temp_macro.fillna(0)
+#     temp_feedstock = temp_feedstock.fillna(0)
+# =============================================================================
+
+    # need a day input, [last day of the training dataset]
+    # puting in an arbitrary date for now
+    input_date = dt.date(2019,12,30)
+    
+    nameP = commodities.loc[i,'pair']
+    row_num = np.where(nameP == lag_factors.pair)[0][0]
+    lag_factor_names = lag_factors.loc[row_num,['factor_1','factor_2','factor_3','factor_4','factor_5']]
+    lag_factor_times = lag_factors.loc[row_num,['lag_1','lag_2','lag_3','lag_4','lag_5']]
+# =============================================================================
+#     days_lag = lag_factor_times * 21 # converting to days equivalent
+#     spec_dates = [input_date - dt.timedelta(days = int(x)) for x in days_lag.tolist()]
+#     lag_dates = spec_dates
+# =============================================================================
+    
+    
+# =============================================================================
+#     X_vars = pd.DataFrame(np.NaN, index = index_level.index, columns = lag_factor_names.tolist())
+#     
+#     # reading in the time series and lagging it by that much
+#     for z in range(len(lag_factor_names)):
+#         if lag_factor_names[z] in temp_macro.columns:
+#             temp = temp_macro.loc[:,lag_factor_names[z]].copy()
+#             temp = temp.shift(int(days_lag[z])) # takes care of the lag
+#             X_vars.loc[:,lag_factor_names[z]] = temp
+#         else:
+#             temp = temp_feedstock.loc[:,lag_factor_names[z]].copy()
+#             temp = temp.shift(int(days_lag[z])) # takes care of the lag
+#             X_vars.loc[:,lag_factor_names[z]] = temp
+# =============================================================================
+            
+            
+    X_vars = commodities_X_lag6.copy()
+    X_vars = X_vars.dropna(axis = 0)
+    
+    def LagFactorData(factor_name, macro_factors, feedstock_factors):
+        if factor_name in macro_factors.columns:
+            temp = macro_factors.loc[:,factor_name].copy()
+            # temp = temp.shift(int(days_lag[z])) # takes care of the lag
+        else:
+            temp = feedstock_factors.loc[:,factor_name].copy()
+            # temp = temp.shift(int(days_lag[z])) # takes care of the lag
+        temp = temp.rename('PX_LAST')
+        return temp
+        
+    
+    # running it on the actual stepwise factor
+    for z in range(5):
+        Y_var = LagFactorData(lag_factor_names[z], macro_factors, feedstock_factors)
+        
+        # Y_var = index_level.copy()# .shift(periods = -21*6) - index_level # 6 months forward
+        
+        # matching the dates
+        joint_df = X_vars.merge(Y_var, how = 'outer', left_index = True, right_index = True)
+        last_day_X = joint_df.iloc[-1,:].drop('PX_LAST', axis = 0)
+        joint_df = joint_df.dropna()
+        features = joint_df.copy()
+        
+        ################################ RF Implementation ################################
+        
+        # labels are the values we want to predict
+        labels = np.array(features['PX_LAST'])
+        
+        # Remove the labels from the features
+        features = features.drop('PX_LAST', axis = 1)
+        
+        # Saving feature names for later use
+        feature_list = list(features.columns)
+        
+        # Convert to numpy array
+        features = np.array(features)
+        from sklearn.ensemble import RandomForestRegressor
+        rf = RandomForestRegressor(random_state = 42)
+        from sklearn.model_selection import RandomizedSearchCV
+        
+        # Number of trees in random forest
+        n_estimators = [int(x) for x in np.linspace(start = 25, stop = 150, num = 15)]
+        # Number of features to consider at every split
+        max_features = ['auto', 'sqrt']
+        # Maximum number of levels in tree
+        max_depth = [int(x) for x in np.linspace(3, 15, num = 2)]
+        # Minimum number of samples required to split a node
+        min_samples_split = [50,60]
+        # Minimum number of samples required at each leaf node
+        min_samples_leaf = [5,10,15]
+        # Method of selecting samples for training each tree
+        bootstrap = [True]
+        # Create the random grid
+        random_grid = {'n_estimators':n_estimators,
+                       'max_features':max_features,
+                       'max_depth':max_depth,
+                       'min_samples_split':min_samples_split,
+                       'min_samples_leaf':min_samples_leaf,
+                       'bootstrap':bootstrap}
+        start_time = dt.datetime.now()
+        t_features = features
+        t_labels = labels
+        # Use the random grid to search for best hyperparameters
+        # First create the base model to tune
+        rf = RandomForestRegressor()
+        # Random search of parameters, using 3 fold cross validation, 
+        # search across 100 different combinations, and use all available cores
+        rf_random = RandomizedSearchCV(estimator = rf, param_distributions = random_grid, 
+                                       n_iter = 100, cv = 3, verbose=0, 
+                                       n_jobs = -1)
+        # Fit the random search model
+        rf_random.fit(t_features, t_labels)
+        
+        rf_random.best_params_
+        
+        # the random search picks different combinations, whereas the grid search is more refinement but slower
+        end = dt.datetime.now()
+        print(end - start_time)
+        
+        # Using Skicit-learn to split data into training and testing sets
+        from sklearn.model_selection import train_test_split
+        # Split the data into training and testing sets
+        train_features, test_features, train_labels, test_labels = train_test_split(features, labels, test_size = 0.20, random_state = 42)
+        
+        from sklearn.model_selection import GridSearchCV
+        # Create the parameter grid based on the results of random search    
+        def GridAdjust(rf_best_params):
+            temp_grid = rf_best_params.copy()
+            p_grid = temp_grid.copy()
+            p_grid['max_depth'] = [temp_grid['max_depth']-1, temp_grid['max_depth']+1]
+            p_grid['min_samples_leaf'] = [max(temp_grid['min_samples_leaf']-5,1), temp_grid['min_samples_leaf']+5]
+            p_grid['min_samples_split'] = [max(temp_grid['min_samples_split']-10,1), temp_grid['min_samples_split']+10]
+            p_grid['n_estimators'] = [max(temp_grid['n_estimators']-15,1), temp_grid['n_estimators']+15]
+            p_grid['max_features'] = [temp_grid['max_features']]
+            p_grid['bootstrap'] = [temp_grid['bootstrap']]
+            return p_grid
+        
+        param_grid = GridAdjust(rf_random.best_params_)
+        
+        # Create a base model
+        rf = RandomForestRegressor()
+        # Instantiate the grid search model
+        grid_search = GridSearchCV(estimator = rf, param_grid = param_grid, 
+                                  cv = 3, n_jobs = -1, verbose = 0)
+        
+        grid_search.fit(t_features, t_labels)
+        grid_search.best_params_
+        
+        best_grid = grid_search.best_estimator_
+        
+        def evaluate(model, test_features, test_labels):
+            predictions = model.predict(test_features)
+            errors = abs(predictions - test_labels)
+            mape = 100 * np.mean(errors / test_labels)
+            RMSE = np.sqrt(np.mean(np.square(abs(predictions - test_labels))))
+            print('Model Performance')
+            print('Average Error: {:0.4f}'.format(np.mean(errors)))
+            print('RMS Error: {:0.4f}'.format(RMSE))
+            return RMSE
+        
+        grid_test_rmse = evaluate(best_grid, test_features, test_labels)
+        grid_train_rmse = evaluate(best_grid, train_features, train_labels)
+        
+        # saving the test_rmse into the dataframe
+        commodities.loc[i, lag_factor_times.index[z]] = grid_test_rmse
