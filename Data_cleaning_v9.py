@@ -1099,3 +1099,9 @@ for i in range(len(commodities)):
         
         # saving the test_rmse into the dataframe
         commodities.loc[i, lag_factor_times.index[z]] = grid_test_rmse
+
+# saving pickle 
+filename = 'commodities_rmse'
+outfile = open(filename, 'wb')
+pickle.dump(commodities, outfile)
+outfile.close()
