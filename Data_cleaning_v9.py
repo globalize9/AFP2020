@@ -905,6 +905,13 @@ outfile = open(filename, 'wb')
 pickle.dump(prediction_proba, outfile)
 outfile.close()
 
+# opening pickle
+infile = open('prediction_probability','rb')
+prediction_probability = pickle.load(infile)
+infile.close()
+
+
+## pick the top 5 pairs based on logistic
 
 
 ####### commodities regression 
@@ -1052,13 +1059,10 @@ for i in range(len(commodities)):
         # the random search picks different combinations, whereas the grid search is more refinement but slower
         end = dt.datetime.now()
         print(end - start_time)
-        
-        # Using Skicit-learn to split data into training and testing sets
-        from sklearn.model_selection import train_test_split
+
         # Split the data into training and testing sets
         train_features, test_features, train_labels, test_labels = train_test_split(features, labels, test_size = 0.20, random_state = 42)
         
-        from sklearn.model_selection import GridSearchCV
         # Create the parameter grid based on the results of random search    
         def GridAdjust(rf_best_params):
             temp_grid = rf_best_params.copy()
