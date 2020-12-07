@@ -1045,3 +1045,11 @@ filename = 'commodities_rmse'
 outfile = open(filename, 'wb')
 pickle.dump(commodities, outfile)
 outfile.close()
+
+
+# opening pickle
+infile = open('commodities_rmse','rb')
+commodities = pickle.load(infile)
+infile.close()
+
+
