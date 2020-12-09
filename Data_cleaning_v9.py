@@ -893,6 +893,8 @@ commodities_X_lag6 = commodities_X.shift(periods = 6*21)
 commodities = lag_factors.copy()
 commodities = commodities.drop('Unnamed: 0', axis = 1)
 
+macro_com = commodities_X.merge(macro_factors['CPI, % YoY'].shift(periods = 6 * 21), left_index = True, right_index = True)
+
 
 for i in range(len(commodities)):
     # insert code to read the stepwise pairs list
@@ -932,6 +934,9 @@ for i in range(len(commodities)):
     for z in range(5):
         Y_var = LagFactorData(lag_factor_names[z], macro_factors, feedstock_factors)
         
+        if lag_factor_names[z] in macro_factors.columns:
+            X_vars = macro_com.copy()
+            X_vars = X_vars.dropna(axis = 0)
         # Y_var = index_level.copy()# .shift(periods = -21*6) - index_level # 6 months forward
         
         # matching the dates
@@ -1040,22 +1045,26 @@ for i in range(len(commodities)):
         # saving the test_rmse into the dataframe
         commodities.loc[i, lag_factor_times.index[z]] = grid_test_rmse
 
-# saving pickle 
+
+
+## replacing the macro factors within the commodities as blank [dropped]
+commodities_only = commodities.copy()
+for j in [1,3,5,7,9]:
+    for i in range(len(commodities_only)):
+        target_col = commodities_only.loc[i,commodities_only.columns[j]] 
+        if target_col in macro_factors.columns:
+            commodities_only.loc[i,commodities_only.columns[j+1]] = np.NaN   
+            
+ # saving pickle 
 filename = 'commodities_rmse'
 outfile = open(filename, 'wb')
-pickle.dump(commodities, outfile)
+pickle.dump([commodities, commodities_only], outfile)
 outfile.close()
 
+# commodities_rmse_no_CPI_1208 without CPI data addition
 
 # opening pickle
 infile = open('commodities_rmse','rb')
-commodities = pickle.load(infile)
-infile.close()
-
-## replacing the macro factors within the commodities as blank [dropped]
-for j in ['factor_1','factor_2','factor_3','factor_4','factor_5']:
-    for i in range(len(commodities)):
-        if commodities.loc[i,j] in macro_factors:
-            
-        
+[commodities, commodities_only] = pickle.load(infile)
+infile.close()       
 
