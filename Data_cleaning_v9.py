@@ -1052,4 +1052,10 @@ infile = open('commodities_rmse','rb')
 commodities = pickle.load(infile)
 infile.close()
 
+## replacing the macro factors within the commodities as blank [dropped]
+for j in ['factor_1','factor_2','factor_3','factor_4','factor_5']:
+    for i in range(len(commodities)):
+        if commodities.loc[i,j] in macro_factors:
+            
+        
 
