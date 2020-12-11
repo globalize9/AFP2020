@@ -3,7 +3,7 @@
 
 # # Importing Packages
 
-# In[11]:
+# In[1]:
 
 
 import random
@@ -23,11 +23,12 @@ import pickle
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import RandomizedSearchCV
+import statsmodels.api as sm
 
 
 # # Get Candidate Pairs
 
-# In[3]:
+# In[2]:
 
 
 def Get_candidate_pairs(data):
@@ -369,7 +370,7 @@ def Factor_Cleaning_All(macro_factors_raw, feedstock_factors_raw):
 
 # # Run Stepwise Regression
 
-# In[7]:
+# In[5]:
 
 
 def stepwise_factors(macro_factors, feedstock_factors, top10_pairs, price_data):
@@ -676,12 +677,13 @@ def Random_Forest_Code(top10_pairs, price_data, macro_factors, feedstock_factors
 
 # # Run Logistic Regression
 
-# In[7]:
+# In[33]:
 
 
 def Logistic_Regression_Code(top10_pairs, price_data, macro_factors, feedstock_factors, lag_factors):
 
     prediction_proba = dict.fromkeys(top10_pairs)
+    r_squares_all = dict.fromkeys(top10_pairs)
 
     for i in range(len(prediction_proba)):
         print(i)
@@ -733,7 +735,7 @@ def Logistic_Regression_Code(top10_pairs, price_data, macro_factors, feedstock_f
             joint_df = joint_df.dropna()
             features = joint_df.copy()
 
-            joint_df['Direction'] = [max(0,x) for x in np.sign(joint_df['PX_LAST'])]
+            joint_df['Direction'] = [1 if abs(x)>0.15 else 0 for x in joint_df['PX_LAST']]
 
             logit = LogisticRegression()
 
@@ -742,11 +744,21 @@ def Logistic_Regression_Code(top10_pairs, price_data, macro_factors, feedstock_f
             proba = logit.predict_proba(pd.DataFrame(last_day_X).transpose())[0][1]
 
             prediction_proba[pair_name] = np.round(proba,4)
+            
+            r2 = sm.OLS(joint_df.loc[:,["PX_LAST"]],joint_df.iloc[:,~joint_df.columns.isin(["Direction","PX_LAST"])]).fit().rsquared
+            
+            r_squares_all[pair_name] = np.round(r2,4)
 
 
     filename = 'prediction_probability'
     outfile = open(filename, 'wb')
     pickle.dump(prediction_proba, outfile)
+    outfile.close()
+
+
+    filename = 'r_squares_all'
+    outfile = open(filename, 'wb')
+    pickle.dump(r_squares_all, outfile)
     outfile.close()
 
 
