@@ -62,13 +62,9 @@ def Execute(data, macro_raw, feedstock_raw):
     
     #Run the Logistic Regression
     
-    print("Running Logit")
-    
     All_Functions.Logistic_Regression_Code(top10_pairs, price_data, macro_factors, feedstock_factors, lag_factors)
     
     #Run the Commodity Random Forest
-    
-    print("Running Comm")
     
     All_Functions.Commodity_RF_Code(top10_pairs, price_data, macro_factors, feedstock_factors, lag_factors)
 
